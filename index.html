@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Match-3 Игра</title>
+    <!-- Подключаем Phaser 3 с интернета -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.88.2/dist/phaser.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #222;
+        }
+
+        #game-container {
+            width: 800px;
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+
+    <!-- Наш код игры -->
+    <script>
+        // Создаём сцену (аналог сцены в Unity)
+        class MyScene extends Phaser.Scene {
+            create() {
+                // Добавляем текст в центр экрана
+                this.add.text(400, 300, 'Привет, Match-3!', {
+                    fontSize: '32px',
+                    fill: '#fff'
+                }).setOrigin(0.5);
+            }
+        }
+
+        // Настройки игры
+        const config = {
+            type: Phaser.AUTO,          // Автоматически выбирает WebGL или Canvas
+            width: 800,                // Ширина игрового поля
+            height: 600,               // Высота игрового поля
+            scene: MyScene,            // Подключаем нашу сцену
+            parent: 'game-container'   // Привязываем к div-контейнеру
+        };
+
+        // Создаём игру
+        const game = new Phaser.Game(config);
+    </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "rows": 8,
+  "cols": 8,
+  "colors": 5,
+  "goal": {
+    "color": 5,
+    "count": 10
+  },
+  "maxMoves": 30
+}

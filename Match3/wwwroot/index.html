@@ -1,0 +1,1442 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Match-3 Игра</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.88.2/dist/phaser.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #2a2a2a;
+            overflow: hidden;           
+            background-image: url('assets/background.webp'); /*фон*/
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat; 
+        }
+        
+        #game-container {
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+    <script>
+        // константы
+        const TILE_SIZE = 64;
+        const UI_HEIGHT = 80;
+        const TOTAL_LEVELS = 10;
+        
+        const MIN_ROWS = 4;
+        const MAX_ROWS = 12;
+        const MIN_COLS = 4;
+        const MAX_COLS = 12;
+        const MIN_COLORS = 3;
+        const MAX_COLORS = 7;
+
+        // типы элементов
+        const ELEMENT_TYPES = {
+            TILE: 'tile',
+            BOX: 'box',
+            BLOCKER: 'blocker',
+            EMPTY: 'empty'
+        };
+
+        const BOX_TYPES = {
+            DESTRUCTIBLE: 'destructible',
+            COLORED: 'colored',
+            COLOR_CHANGING: 'color_changing',
+            BLOCKER: 'blocker'
+        };
+
+        let LEVEL_CONFIG = null;
+        let CURRENT_LEVEL = 1;
+        const CACHE_BUSTER = Date.now();
+
+        // загрузка конфига уровня
+        async function loadLevelConfig(levelNumber) {
+            try {
+                const timestamp = Date.now();
+                const response = await fetch(`levels/level_${levelNumber}.json?t=${timestamp}`);
+                if (!response.ok) {
+                    if (response.status === 404 && levelNumber > 1) {
+                        console.warn(` Уровень ${levelNumber} не найден, загружаю уровень ${levelNumber - 1}`);
+                        return await loadLevelConfig(levelNumber - 1);
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                console.log(` Уровень ${levelNumber} загружен:`, data);
+                return data;
+            } catch (error) {
+                console.warn(` Ошибка загрузки уровня ${levelNumber}:`, error.message);
+                return {
+                    rows: 8,
+                    cols: 8,
+                    colors: 5,
+                    goal: { color: 0, count: 10 },
+                    maxMoves: 25,
+                    level: levelNumber,
+                    fixedTiles: [],
+                    boxes: []
+                };
+            }
+        }
+
+        function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+        // сцена
+        class Match3Scene extends Phaser.Scene {
+            constructor() {
+                super('Match3Scene');
+                this.board = [];
+                this.tileSprites = [];
+                this.collected = [];
+                this.selectedTile = null;
+                this.isProcessing = false;
+                this.goalColor = 0;
+                this.goalReached = false;
+                this.processingCount = 0;
+                this.uiText = null;
+                this.goalIcon = null;
+                this.goalLabel = null;
+                this.levelLabel = null;
+                this.moves = 0;
+                this.isGameOver = false;
+                this.modalActive = false;
+                this.timers = [];
+                this.currentLevel = 1;
+                this.boxes = [];
+                this.colorChangingBoxes = [];
+                this.lastMoveCount = 0;
+
+                this.ROWS = 8;
+                this.COLS = 8;
+                this.COLORS = 5;
+                this.GOAL_COUNT = 10;
+                this.MAX_MOVES = 30;
+                this.goalColor = 0;
+                this.OFFSET_X = 0;
+                this.OFFSET_Y = 0;
+                this.fixedTiles = [];
+                this.extraLabels = [];
+            }
+
+            // загрузка изображений
+            preload() {
+                console.log(' Загружаю картинки...');
+
+                for (let i = 0; i < this.COLORS; i++) {
+                    this.load.image('tile_' + i, `assets/tile_${i}.png?t=${CACHE_BUSTER}`);
+                }
+
+                for (let i = 0; i < this.COLORS; i++) {
+                    this.load.image('box_' + i, `assets/box_${i}.png?t=${CACHE_BUSTER}`);
+                }
+
+                for (let i = 0; i < this.COLORS; i++) {
+                    this.load.image('box_large_' + i, `assets/box_large_${i}.png?t=${CACHE_BUSTER}`);
+                }
+
+                this.load.image('box_blocker', `assets/box_blocker.png?t=${CACHE_BUSTER}`);
+                this.load.image('box_blocker_large', `assets/box_blocker_large.png?t=${CACHE_BUSTER}`);
+
+                
+                this.load.image('box_neutral', `assets/box_neutral.png?t=${CACHE_BUSTER}`);
+                this.load.image('box_neutral_large', `assets/box_neutral_large.png?t=${CACHE_BUSTER}`);
+            }
+
+            // отступы
+            calculateOffsets() {
+                const gameWidth = this.sys.game.config.width;
+                const gameHeight = this.sys.game.config.height;
+                const boardWidth = this.COLS * TILE_SIZE;
+                const boardHeight = this.ROWS * TILE_SIZE;
+                this.OFFSET_X = (gameWidth - boardWidth) / 2;
+                this.OFFSET_Y = (gameHeight - boardHeight - UI_HEIGHT) / 2 + UI_HEIGHT / 2;
+            }
+
+            
+            drawBoardFrame() {
+                if (this.boardFrame) { this.boardFrame.destroy(); }
+
+                const boardWidth = this.COLS * TILE_SIZE;
+                const boardHeight = this.ROWS * TILE_SIZE;
+                const padding = 18;
+
+                const frameX = this.OFFSET_X - padding;
+                const frameY = this.OFFSET_Y - padding;
+                const frameW = boardWidth + padding * 2;
+                const frameH = boardHeight + padding * 2;
+
+                const g = this.add.graphics();
+                g.setDepth(-10);
+
+                // внешняя  рамка 
+                g.fillStyle(0x4b4f57, 1);
+                g.fillRoundedRect(frameX, frameY, frameW, frameH, 20);
+                g.lineStyle(2, 0x63676f, 1);
+                g.strokeRoundedRect(frameX, frameY, frameW, frameH, 20);
+                g.lineStyle(2, 0x33363b, 0.6);
+                g.strokeRoundedRect(frameX + 3, frameY + 3, frameW - 6, frameH - 6, 17);
+
+                // внутренняя  панель под клетками 
+                g.fillStyle(0x35383e, 1);
+                g.fillRoundedRect(this.OFFSET_X - 4, this.OFFSET_Y - 4, boardWidth + 8, boardHeight + 8, 10);
+
+                this.boardFrame = g;
+            }
+
+            // инициализация
+            init(data) {
+                const config = data?.config || LEVEL_CONFIG;
+                this.currentLevel = data?.level || CURRENT_LEVEL || 1;
+
+                if (config) {
+                    this.ROWS = clamp(config.rows || 8, MIN_ROWS, MAX_ROWS);
+                    this.COLS = clamp(config.cols || 8, MIN_COLS, MAX_COLS);
+                    this.COLORS = clamp(config.colors || 5, MIN_COLORS, MAX_COLORS);
+                    this.GOAL_COUNT = Math.max(1, config.goal?.count || 10);
+                    this.MAX_MOVES = Math.max(1, config.maxMoves || 30);
+                    const goalColor = config.goal?.color || 0;
+                    this.goalColor = clamp(goalColor, 0, this.COLORS - 1);
+                    this.fixedTiles = config.fixedTiles || [];
+                    this.boxes = config.boxes || [];
+
+                    console.log(` Уровень ${this.currentLevel}:`, {
+                        rows: this.ROWS,
+                        cols: this.COLS,
+                        colors: this.COLORS,
+                        goalColor: this.goalColor,
+                        goalCount: this.GOAL_COUNT,
+                        maxMoves: this.MAX_MOVES,
+                        fixedTiles: this.fixedTiles.length,
+                        boxes: this.boxes.length
+                    });
+                } else {
+                    this.goalColor = Math.floor(Math.random() * this.COLORS);
+                    this.fixedTiles = [];
+                    this.boxes = [];
+                }
+                this.calculateOffsets();
+                this.lastMoveCount = 0;
+            }
+
+            // создание сцены
+            create() {
+                this.clearTimers();
+
+                this.collected = new Array(this.COLORS).fill(0);
+                this.goalReached = false;
+                this.isGameOver = false;
+                this.tileSprites = [];
+                this.selectedTile = null;
+                this.isProcessing = false;
+                this.processingCount = 0;
+                this.moves = 0;
+                this.modalActive = false;
+                this.colorChangingBoxes = [];
+                this.extraLabels = [];
+
+                this.drawBoardFrame();
+                this.createBoard();
+                this.drawBoard();
+
+                const matches = this.findAllMatches();
+                if (matches.size > 0) {
+                    this.isProcessing = true;
+                    this.processMatches();
+                }
+
+                this.updateUI();
+
+                this.input.on('pointerdown', (pointer) => {
+                    if (this.isProcessing || this.goalReached || this.isGameOver || this.modalActive) return;
+                    const x = pointer.x - this.OFFSET_X;
+                    const y = pointer.y - this.OFFSET_Y;
+                    const col = Math.floor(x / TILE_SIZE);
+                    const row = Math.floor(y / TILE_SIZE);
+                    if (!this.isValidPosition(row, col)) return;
+
+                    const cell = this.board[row][col];
+                    if (!cell || cell.type === ELEMENT_TYPES.EMPTY) return;
+                    if (cell.type === ELEMENT_TYPES.BOX || cell.type === ELEMENT_TYPES.BLOCKER || cell.isPartOfBox) return;
+
+                    if (this.selectedTile === null) {
+                        this.selectedTile = { row, col };
+                        const data = this.tileSprites[row]?.[col];
+                        const sprite = data?.sprite;
+                        if (sprite) {
+                            this.tweens.add({ targets: sprite, scale: 1.2, duration: 100, yoyo: true, ease: 'Sine.easeOut' });
+                        }
+                    } else {
+                        const r1 = this.selectedTile.row;
+                        const c1 = this.selectedTile.col;
+                        if (row === r1 && col === c1) { this.selectedTile = null; return; }
+                        if (Math.abs(row - r1) + Math.abs(col - c1) !== 1) {
+                            this.selectedTile = { row, col };
+                            const data = this.tileSprites[row]?.[col];
+                            const sprite = data?.sprite;
+                            if (sprite) { this.tweens.add({ targets: sprite, scale: 1.2, duration: 100, yoyo: true, ease: 'Sine.easeOut' }); }
+                            return;
+                        }
+
+                        const cell1 = this.board[r1][c1];
+                        const cell2 = this.board[row][col];
+                        if (!cell1 || !cell2 || cell1.type !== ELEMENT_TYPES.TILE || cell2.type !== ELEMENT_TYPES.TILE) {
+                            this.selectedTile = null;
+                            return;
+                        }
+
+                        this.swapTiles(r1, c1, row, col);
+                        this.selectedTile = null;
+                    }
+                });
+
+                
+                this.events.off('postupdate', this.onPostUpdate, this);
+                this.events.on('postupdate', this.onPostUpdate, this);
+
+                this.input.keyboard?.on('keydown-R', () => { this.hotReload(); });
+                this.input.keyboard?.on('keydown-N', () => { this.goToNextLevel(); });
+            }
+
+            // обновление каждый ход
+            onPostUpdate() {
+                if (this.moves > this.lastMoveCount && !this.isProcessing && !this.goalReached && !this.isGameOver) {
+                    this.lastMoveCount = this.moves;
+                    this.updateColorChangingBoxes();
+                }
+            }
+
+            updateColorChangingBoxes() {
+                
+                if (!this.board || this.board.length !== this.ROWS) return;
+
+                for (let r = 0; r < this.ROWS; r++) {
+                    const rowArr = this.board[r];
+                    if (!rowArr || rowArr.length !== this.COLS) continue;
+                    for (let c = 0; c < this.COLS; c++) {
+                        const cell = rowArr[c];
+                        if (cell && cell.type === ELEMENT_TYPES.BOX && cell.boxType === BOX_TYPES.COLOR_CHANGING && !cell.isPartOfBox) {
+                            const newColor = Math.floor(Math.random() * this.COLORS);
+                            cell.color = newColor;
+                            this.updateCellSprite(r, c);
+                        }
+                    }
+                }
+            }
+
+            updateCellSprite(row, col) {
+                const cell = this.board[row][col];
+                const data = this.tileSprites[row]?.[col];
+                if (!data) return;
+
+                if (data.sprite && data.sprite.active) { data.sprite.destroy(); }
+                if (data.frame && data.frame.active) { data.frame.destroy(); }
+                if (data.label && data.label.active) { data.label.destroy(); }
+
+                const pos = this.getTilePosition(row, col);
+                this.createCellSprite(row, col, cell, pos.x, pos.y);
+            }
+
+            
+            isValidPosition(row, col) { return row >= 0 && row < this.ROWS && col >= 0 && col < this.COLS; }
+            getTilePosition(row, col) { return { x: this.OFFSET_X + col * TILE_SIZE + TILE_SIZE / 2, y: this.OFFSET_Y + row * TILE_SIZE + TILE_SIZE / 2 }; }
+
+            
+            createCellSprite(row, col, cell, x, y) {
+                let sprite = null;
+                let frame = null;
+                let label = null;
+
+                if (cell.type === ELEMENT_TYPES.TILE) {
+                    sprite = this.add.sprite(x, y, 'tile_' + cell.color);
+                    sprite.setDepth(0);
+
+                    if (cell.isFixed) {
+                        const graphics = this.make.graphics({ add: false });
+                        const padding = 4;
+                        graphics.lineStyle(3, 0xffd700, 1);
+                        graphics.strokeRoundedRect(padding, padding, TILE_SIZE - padding * 2, TILE_SIZE - padding * 2, 8);
+                        const key = 'frame_' + row + '_' + col;
+                        if (!this.textures.exists(key)) {
+                            graphics.generateTexture(key, TILE_SIZE, TILE_SIZE);
+                        }
+                        graphics.destroy();
+                        frame = this.add.sprite(x, y, key);
+                        frame.setDepth(1);
+                    }
+
+                } else if (cell.type === ELEMENT_TYPES.BOX) {
+                    const size = cell.size || 1;
+                    const isBlocker = cell.boxType === BOX_TYPES.BLOCKER;
+
+                    let textureKey;
+                    if (isBlocker) {
+                        textureKey = size > 1 ? 'box_blocker_large' : 'box_blocker';
+                    } else if (cell.boxType === BOX_TYPES.DESTRUCTIBLE) {
+                        
+                        textureKey = size > 1 ? 'box_neutral_large' : 'box_neutral';
+                    } else {
+                        textureKey = size > 1 ? 'box_large_' + (cell.color || 0) : 'box_' + (cell.color || 0);
+                    }
+
+                    
+                    let spriteX = x;
+                    let spriteY = y;
+                    if (size > 1) {
+                        spriteX = x + (TILE_SIZE * (size - 1)) / 2;
+                        spriteY = y + (TILE_SIZE * (size - 1)) / 2;
+                    }
+
+                    sprite = this.add.sprite(spriteX, spriteY, textureKey);
+                    sprite.setDepth(2);
+
+                    if (size > 1) {
+                        sprite.setDisplaySize(TILE_SIZE * size, TILE_SIZE * size);
+                    }
+
+                    
+                    if (!isBlocker && cell.hp && cell.hp > 1) {
+                        label = this.add.text(spriteX, spriteY, String(cell.hp), {
+                            fontFamily: "'Baloo 2', 'Trebuchet MS', sans-serif",
+                            fontSize: size > 1 ? '40px' : '24px',
+                            color: '#ffffff',
+                            fontStyle: '800',
+                            stroke: '#000000',
+                            strokeThickness: 5
+                        }).setOrigin(0.5).setDepth(3);
+                    }
+
+                } else if (cell.type === ELEMENT_TYPES.BLOCKER) {
+                    const size = cell.size || 1;
+                    const textureKey = size > 1 ? 'box_blocker_large' : 'box_blocker';
+
+                    let spriteX = x;
+                    let spriteY = y;
+                    if (size > 1) {
+                        spriteX = x + (TILE_SIZE * (size - 1)) / 2;
+                        spriteY = y + (TILE_SIZE * (size - 1)) / 2;
+                    }
+
+                    sprite = this.add.sprite(spriteX, spriteY, textureKey);
+                    sprite.setDepth(2);
+                    if (size > 1) {
+                        sprite.setDisplaySize(TILE_SIZE * size, TILE_SIZE * size);
+                    }
+                }
+
+                this.tileSprites[row][col] = {
+                    sprite: sprite,
+                    frame: frame,
+                    label: label,
+                    isFixed: cell.type === ELEMENT_TYPES.TILE ? cell.isFixed || false : false
+                };
+
+                return sprite;
+            }
+
+            clearTimers() {
+                for (let timer of this.timers) {
+                    if (timer) { timer.remove(); }
+                }
+                this.timers = [];
+                this.time.removeAllEvents();
+            }
+
+            
+            clearCellSpriteAt(row, col) {
+                const data = this.tileSprites[row]?.[col];
+                if (data) {
+                    if (data.sprite && data.sprite.active) { data.sprite.destroy(); }
+                    if (data.frame && data.frame.active) { data.frame.destroy(); }
+                    if (data.label && data.label.active) { data.label.destroy(); }
+                    this.tileSprites[row][col] = null;
+                }
+            }
+
+            // система уровней
+            async goToLevel(levelNumber) {
+                if (this.modalActive) return;
+                this.clearTimers();
+
+                this.currentLevel = levelNumber;
+                CURRENT_LEVEL = levelNumber;
+
+                const config = await loadLevelConfig(levelNumber);
+                LEVEL_CONFIG = config;
+
+                this.scene.restart({ config: config, level: levelNumber });
+            }
+
+            goToNextLevel() {
+                const nextLevel = this.currentLevel + 1;
+                if (nextLevel <= TOTAL_LEVELS) {
+                    this.goToLevel(nextLevel);
+                } else {
+                    console.log('🎉 Все уровни пройдены!');
+                    this.showAllLevelsComplete();
+                }
+            }
+
+            restartLevel() {
+                this.goToLevel(this.currentLevel);
+            }
+
+            hotReload() {
+                console.log(`🔄 Hot reload уровня ${this.currentLevel}`);
+                this.restartLevel();
+            }
+
+            // логика поля
+            createBoard() {
+                this.board = [];
+
+                // 1. заполняем пустотой
+                for (let r = 0; r < this.ROWS; r++) {
+                    this.board[r] = [];
+                    for (let c = 0; c < this.COLS; c++) {
+                        this.board[r][c] = { type: ELEMENT_TYPES.EMPTY };
+                    }
+                }
+
+                // 2. устанавливаем ящики
+                const boxes = this.boxes || [];
+                for (let box of boxes) {
+                    const row = box.row;
+                    const col = box.col;
+                    const size = box.size || 1;
+
+                    if (row >= 0 && row < this.ROWS && col >= 0 && col < this.COLS) {
+                        let canPlace = true;
+                        for (let r = row; r < row + size; r++) {
+                            for (let c = col; c < col + size; c++) {
+                                if (!this.isValidPosition(r, c) || this.board[r][c].type !== ELEMENT_TYPES.EMPTY) {
+                                    canPlace = false;
+                                    break;
+                                }
+                            }
+                            if (!canPlace) break;
+                        }
+
+                        if (canPlace) {
+                            const isBlocker = box.boxType === BOX_TYPES.BLOCKER;
+
+                            const boxData = {
+                                type: isBlocker ? ELEMENT_TYPES.BLOCKER : ELEMENT_TYPES.BOX,
+                                boxType: box.boxType || BOX_TYPES.DESTRUCTIBLE,
+                                color: box.color !== undefined ? clamp(box.color, 0, this.COLORS - 1) : 0,
+                                hp: box.hp || 1,
+                                contains: box.contains || null,
+                                size: size
+                            };
+
+                            if (size > 1) {
+                                for (let r = row; r < row + size; r++) {
+                                    for (let c = col; c < col + size; c++) {
+                                        if (r === row && c === col) {
+                                            this.board[r][c] = boxData;
+                                        } else {
+                                            this.board[r][c] = {
+                                                type: ELEMENT_TYPES.BOX,
+                                                isPartOfBox: true,
+                                                parentRow: row,
+                                                parentCol: col
+                                            };
+                                        }
+                                    }
+                                }
+                            } else {
+                                this.board[row][col] = boxData;
+                            }
+
+                            console.log(`   📦 Ящик: [${row},${col}] тип=${box.boxType}, размер=${size}, цвет=${box.color || 0}`);
+                        } else {
+                            console.warn(`⚠️ Не удалось разместить ящик [${row},${col}] размером ${size} — место занято`);
+                        }
+                    }
+                }
+
+                // 3. заполняем фишками
+                for (let r = 0; r < this.ROWS; r++) {
+                    for (let c = 0; c < this.COLS; c++) {
+                        if (this.board[r][c].type === ELEMENT_TYPES.EMPTY) {
+                            this.board[r][c] = {
+                                type: ELEMENT_TYPES.TILE,
+                                color: Math.floor(Math.random() * this.COLORS),
+                                isFixed: false
+                            };
+                        }
+                    }
+                }
+
+                // 4. фиксированные фишки
+                const fixedTiles = this.fixedTiles || [];
+                for (let tile of fixedTiles) {
+                    const row = tile.row;
+                    const col = tile.col;
+                    const color = tile.color;
+                    if (row >= 0 && row < this.ROWS && col >= 0 && col < this.COLS) {
+                        if (color >= 0 && color < this.COLORS) {
+                            const cell = this.board[row][col];
+                            if (cell.type === ELEMENT_TYPES.TILE) {
+                                cell.color = color;
+                                cell.isFixed = true;
+                            }
+                        }
+                    }
+                }
+
+                // 5. удаляем начальные матчи
+                let anyMatch = true;
+                let attempts = 0;
+                const maxAttempts = 100;
+
+                while (anyMatch && attempts < maxAttempts) {
+                    anyMatch = false;
+                    attempts++;
+                    const matches = this.findAllMatches();
+
+                    if (matches.size > 0) {
+                        anyMatch = true;
+                        for (let key of matches) {
+                            const [r, c] = key.split(',').map(Number);
+                            const cell = this.board[r][c];
+                            if (cell.type === ELEMENT_TYPES.TILE && !cell.isFixed) {
+                                cell.color = Math.floor(Math.random() * this.COLORS);
+                            }
+                        }
+                    }
+                }
+
+                this.collectColorChangingBoxes();
+            }
+
+            collectColorChangingBoxes() {
+                this.colorChangingBoxes = [];
+                for (let r = 0; r < this.ROWS; r++) {
+                    for (let c = 0; c < this.COLS; c++) {
+                        const cell = this.board[r][c];
+                        if (cell && cell.type === ELEMENT_TYPES.BOX &&
+                            cell.boxType === BOX_TYPES.COLOR_CHANGING && !cell.isPartOfBox) {
+                            this.colorChangingBoxes.push({ row: r, col: c });
+                        }
+                    }
+                }
+            }
+
+            findAllMatches() {
+                const matches = new Set();
+                for (let r = 0; r < this.ROWS; r++) {
+                    for (let c = 0; c < this.COLS - 2; c++) {
+                        const cell1 = this.board[r][c];
+                        const cell2 = this.board[r][c + 1];
+                        const cell3 = this.board[r][c + 2];
+                        if (cell1 && cell2 && cell3 &&
+                            cell1.type === ELEMENT_TYPES.TILE &&
+                            cell2.type === ELEMENT_TYPES.TILE &&
+                            cell3.type === ELEMENT_TYPES.TILE &&
+                            cell1.color === cell2.color &&
+                            cell1.color === cell3.color) {
+                            matches.add(r + ',' + c);
+                            matches.add(r + ',' + (c + 1));
+                            matches.add(r + ',' + (c + 2));
+                        }
+                    }
+                }
+                for (let c = 0; c < this.COLS; c++) {
+                    for (let r = 0; r < this.ROWS - 2; r++) {
+                        const cell1 = this.board[r][c];
+                        const cell2 = this.board[r + 1][c];
+                        const cell3 = this.board[r + 2][c];
+                        if (cell1 && cell2 && cell3 &&
+                            cell1.type === ELEMENT_TYPES.TILE &&
+                            cell2.type === ELEMENT_TYPES.TILE &&
+                            cell3.type === ELEMENT_TYPES.TILE &&
+                            cell1.color === cell2.color &&
+                            cell1.color === cell3.color) {
+                            matches.add(r + ',' + c);
+                            matches.add((r + 1) + ',' + c);
+                            matches.add((r + 2) + ',' + c);
+                        }
+                    }
+                }
+                return matches;
+            }
+
+            
+            getBoxesAdjacentToMatches(matchSet) {
+                const boxesToDamage = [];
+                const processed = new Set();
+
+                for (let r = 0; r < this.ROWS; r++) {
+                    for (let c = 0; c < this.COLS; c++) {
+                        const cell = this.board[r][c];
+                        if (!cell || cell.type !== ELEMENT_TYPES.BOX || cell.isPartOfBox) continue;
+
+                        const key = r + ',' + c;
+                        if (processed.has(key)) continue;
+
+                        const size = cell.size || 1;
+                        let matchedColor = null;
+                        let isAdjacent = false;
+
+                        
+                        for (let br = r - 1; br <= r + size; br++) {
+                            for (let bc = c - 1; bc <= c + size; bc++) {
+                                const insideFootprint = br >= r && br < r + size && bc >= c && bc < c + size;
+                                if (insideFootprint) continue;
+
+                                const isOrthogonalNeighbor =
+                                    (bc >= c && bc < c + size && (br === r - 1 || br === r + size)) ||
+                                    (br >= r && br < r + size && (bc === c - 1 || bc === c + size));
+                                if (!isOrthogonalNeighbor) continue;
+                                if (!this.isValidPosition(br, bc)) continue;
+
+                                if (matchSet.has(br + ',' + bc)) {
+                                    const matchedCell = this.board[br][bc];
+                                    if (matchedCell && matchedCell.type === ELEMENT_TYPES.TILE) {
+                                        isAdjacent = true;
+                                        matchedColor = matchedCell.color;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (isAdjacent) {
+                            boxesToDamage.push({ row: r, col: c, boxCell: cell, color: matchedColor });
+                            processed.add(key);
+                        }
+                    }
+                }
+
+                return boxesToDamage;
+            }
+
+            hasValidMoves() {
+                for (let r = 0; r < this.ROWS; r++) {
+                    for (let c = 0; c < this.COLS; c++) {
+                        const cell = this.board[r][c];
+                        if (!cell || cell.type !== ELEMENT_TYPES.TILE) continue;
+                        if (c < this.COLS - 1) {
+                            const cell2 = this.board[r][c + 1];
+                            if (!cell2 || cell2.type !== ELEMENT_TYPES.TILE) continue;
+                            this.swapBoard(r, c, r, c + 1);
+                            const matches = this.findAllMatches();
+                            this.swapBoard(r, c, r, c + 1);
+                            if (matches.size > 0) return true;
+                        }
+                        if (r < this.ROWS - 1) {
+                            const cell2 = this.board[r + 1][c];
+                            if (!cell2 || cell2.type !== ELEMENT_TYPES.TILE) continue;
+                            this.swapBoard(r, c, r + 1, c);
+                            const matches = this.findAllMatches();
+                            this.swapBoard(r, c, r + 1, c);
+                            if (matches.size > 0) return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            swapBoard(r1, c1, r2, c2) {
+                const temp = this.board[r1][c1];
+                this.board[r1][c1] = this.board[r2][c2];
+                this.board[r2][c2] = temp;
+            }
+
+            shuffleBoard() {
+                for (let r = 0; r < this.ROWS; r++) {
+                    for (let c = 0; c < this.COLS; c++) {
+                        const cell = this.board[r][c];
+                        if (cell && cell.type === ELEMENT_TYPES.TILE && !cell.isFixed) {
+                            cell.color = Math.floor(Math.random() * this.COLORS);
+                        }
+                    }
+                }
+                let attempts = 0;
+                while (attempts < 100) {
+                    const matches = this.findAllMatches();
+                    if (matches.size === 0) break;
+                    for (let key of matches) {
+                        const [r, c] = key.split(',').map(Number);
+                        const cell = this.board[r][c];
+                        if (cell && cell.type === ELEMENT_TYPES.TILE && !cell.isFixed) {
+                            cell.color = Math.floor(Math.random() * this.COLORS);
+                        }
+                    }
+                    attempts++;
+                }
+                this.drawBoard();
+            }
+
+            // обмен
+            swapTilesWithAnimation(row1, col1, row2, col2) {
+                return new Promise((resolve) => {
+                    const data1 = this.tileSprites[row1]?.[col1];
+                    const data2 = this.tileSprites[row2]?.[col2];
+                    const sprite1 = data1?.sprite;
+                    const sprite2 = data2?.sprite;
+                    
+                    const frame1 = data1?.frame;
+                    const frame2 = data2?.frame;
+
+                    if (!sprite1 || !sprite2) { resolve(false); return; }
+
+                    const pos1 = this.getTilePosition(row2, col2);
+                    const pos2 = this.getTilePosition(row1, col1);
+                    const targets1 = [sprite1, frame1].filter(Boolean);
+                    const targets2 = [sprite2, frame2].filter(Boolean);
+
+                    this.tweens.add({ targets: targets1, x: pos1.x, y: pos1.y, duration: 300, ease: 'Power2.easeOut' });
+                    this.tweens.add({
+                        targets: targets2, x: pos2.x, y: pos2.y, duration: 300, ease: 'Power2.easeOut',
+                        onComplete: () => {
+                            this.swapBoard(row1, col1, row2, col2);
+
+                            const tempData = this.tileSprites[row1][col1];
+                            this.tileSprites[row1][col1] = this.tileSprites[row2][col2];
+                            this.tileSprites[row2][col2] = tempData;
+
+                            const matches = this.findAllMatches();
+                            if (matches.size > 0) {
+                                this.moves++;
+                                this.updateUI();
+                                this.isProcessing = true;
+                                this.processMatches();
+                                resolve(true);
+                            } else {
+                                const startPos1 = this.getTilePosition(row1, col1);
+                                const startPos2 = this.getTilePosition(row2, col2);
+                                this.tweens.add({ targets: targets1, x: startPos1.x, y: startPos1.y, duration: 300, ease: 'Power2.easeOut' });
+                                this.tweens.add({
+                                    targets: targets2, x: startPos2.x, y: startPos2.y, duration: 300, ease: 'Power2.easeOut',
+                                    onComplete: () => {
+                                        this.swapBoard(row1, col1, row2, col2);
+                                        const tempDataBack = this.tileSprites[row1][col1];
+                                        this.tileSprites[row1][col1] = this.tileSprites[row2][col2];
+                                        this.tileSprites[row2][col2] = tempDataBack;
+                                        resolve(false);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                });
+            }
+
+            async swapTiles(row1, col1, row2, col2) {
+                if (this.isProcessing || this.goalReached || this.isGameOver || this.modalActive) return false;
+                if (!this.isValidPosition(row1, col1) || !this.isValidPosition(row2, col2)) return false;
+                if (Math.abs(row1 - row2) + Math.abs(col1 - col2) !== 1) return false;
+                if (!this.tileSprites[row1]?.[col1]?.sprite || !this.tileSprites[row2]?.[col2]?.sprite) return false;
+                return await this.swapTilesWithAnimation(row1, col1, row2, col2);
+            }
+
+            
+            processMatches() {
+                if (this.goalReached || this.isGameOver) { this.isProcessing = false; return false; }
+
+                const matches = this.findAllMatches();
+                if (matches.size === 0) {
+                    this.isProcessing = false;
+                    this.checkGameOver();
+                    return false;
+                }
+
+                this.processingCount++;
+                if (this.processingCount > 50) {
+                    console.warn('Превышен лимит обработки матчей');
+                    this.processingCount = 0;
+                    this.isProcessing = false;
+                    this.shuffleBoard();
+                    this.checkGameOver();
+                    return false;
+                }
+
+                
+                const boxesToDamage = this.getBoxesAdjacentToMatches(matches);
+
+                const spritesToRemove = [];
+                const colorsToCollect = [];
+
+                for (let key of matches) {
+                    const [r, c] = key.split(',').map(Number);
+                    const cell = this.board[r][c];
+                    if (cell && cell.type === ELEMENT_TYPES.TILE) {
+                        colorsToCollect.push(cell.color);
+                        const data = this.tileSprites[r]?.[c];
+                        const sprite = data?.sprite;
+                        const frame = data?.frame;
+                        if (sprite && sprite.active) {
+                            spritesToRemove.push({ sprite, frame, row: r, col: c });
+                        }
+                        this.board[r][c] = { type: ELEMENT_TYPES.EMPTY };
+                        this.tileSprites[r][c] = null; 
+                    }
+                }
+
+                // Урон ящикам
+                this.processBoxDamage(boxesToDamage);
+
+                for (let color of colorsToCollect) { this.collected[color]++; }
+                this.updateUI();
+
+                if (this.collected[this.goalColor] >= this.GOAL_COUNT && !this.goalReached) {
+                    this.goalReached = true;
+                    this.showVictory();
+                    this.processingCount = 0;
+                    this.isProcessing = false;
+                    return true;
+                }
+
+                this.isProcessing = true;
+
+                
+                const goalColorMatchedCount = colorsToCollect.filter(c => c === this.goalColor).length;
+                if (goalColorMatchedCount > 0) {
+                    this.showMatchCount(goalColorMatchedCount);
+                }
+
+                for (let item of spritesToRemove) {
+                    if (item.sprite && item.sprite.active) {
+                        this.tweens.add({
+                            targets: item.sprite,
+                            scale: 0,
+                            alpha: 0,
+                            duration: 300,
+                            ease: 'Power2.easeIn',
+                            onComplete: () => {
+                                if (item.sprite.active) { item.sprite.destroy(); }
+                                if (item.frame && item.frame.active) { item.frame.destroy(); }
+                            }
+                        });
+                    }
+                }
+
+                const timer = this.time.delayedCall(400, () => { this.dropTiles(); }, [], this);
+                this.timers.push(timer);
+                return true;
+            }
+
+            
+            processBoxDamage(boxesToDamage) {
+                for (let boxMatch of boxesToDamage) {
+                    const { row, col, boxCell, color } = boxMatch;
+                    if (!boxCell || boxCell.type !== ELEMENT_TYPES.BOX) continue;
+                    if (boxCell.boxType === BOX_TYPES.BLOCKER) continue; // неразрушимый — пропускаем
+                    if ((boxCell.boxType === BOX_TYPES.COLORED || boxCell.boxType === BOX_TYPES.COLOR_CHANGING)
+                        && boxCell.color !== color) continue; // сработал матч не того цвета
+
+                    boxCell.hp = (boxCell.hp || 1) - 1;
+
+                    if (boxCell.hp <= 0) {
+                        this.destroyBox(row, col);
+                    } else {
+                        this.updateCellSprite(row, col); // обновляем счётчик жизни ящика
+                    }
+                }
+            }
+
+            
+            destroyBox(row, col) {
+                const box = this.board[row][col];
+                if (!box || box.type !== ELEMENT_TYPES.BOX) return;
+
+                const size = box.size || 1;
+                const contains = box.contains;
+
+                for (let r = row; r < row + size; r++) {
+                    for (let c = col; c < col + size; c++) {
+                        if (!this.isValidPosition(r, c)) continue;
+
+                        const data = this.tileSprites[r]?.[c];
+                        if (data) {
+                            const targets = [data.sprite, data.frame, data.label].filter(t => t && t.active);
+                            if (targets.length) {
+                                this.tweens.add({
+                                    targets,
+                                    scale: 0,
+                                    alpha: 0,
+                                    duration: 250,
+                                    ease: 'Power2.easeIn',
+                                    onComplete: () => targets.forEach(t => { if (t.active) t.destroy(); })
+                                });
+                            }
+                            this.tileSprites[r][c] = null;
+                        }
+
+                        if (r === row && c === col && contains) {
+                            this.board[r][c] = {
+                                type: contains.type === ELEMENT_TYPES.TILE ? ELEMENT_TYPES.TILE : ELEMENT_TYPES.BOX,
+                                color: contains.color ?? 0,
+                                isFixed: false,
+                                boxType: contains.boxType || null,
+                                hp: contains.hp || 1,
+                                contains: contains.contains || null,
+                                size: 1
+                            };
+                        } else {
+                            this.board[r][c] = { type: ELEMENT_TYPES.EMPTY };
+                        }
+                    }
+                }
+
+                console.log(`📦 Ящик [${row},${col}] размером ${size}×${size} разрушен`);
+            }
+
+            showMatchCount(count) {
+                const gameWidth = this.sys.game.config.width;
+                const gameHeight = this.sys.game.config.height;
+                const text = this.add.text(gameWidth / 2, gameHeight / 2, `+${count}`, {
+                    fontSize: '72px',
+                    fill: '#ffd700',
+                    fontStyle: 'bold',
+                    stroke: '#000',
+                    strokeThickness: 6
+                }).setOrigin(0.5).setDepth(1000);
+                this.tweens.add({
+                    targets: text, scale: 0.5, alpha: 1, duration: 200, ease: 'Power2.easeOut',
+                    onComplete: () => {
+                        this.tweens.add({
+                            targets: text, y: gameHeight / 2 - 50, alpha: 0, duration: 500, ease: 'Power2.easeIn',
+                            onComplete: () => text.destroy()
+                        });
+                    }
+                });
+            }
+
+            // падение
+            
+            isObstacleCell(row, col) {
+                const cell = this.board[row][col];
+                return !!(cell && (
+                    cell.type === ELEMENT_TYPES.BOX ||
+                    cell.type === ELEMENT_TYPES.BLOCKER
+                ) || (cell && cell.isPartOfBox));
+            }
+
+            
+            syncMissingSprites() {
+                for (let r = 0; r < this.ROWS; r++) {
+                    for (let c = 0; c < this.COLS; c++) {
+                        const cell = this.board[r][c];
+                        if (cell && cell.type !== ELEMENT_TYPES.EMPTY && !cell.isPartOfBox && !this.tileSprites[r]?.[c]) {
+                            const pos = this.getTilePosition(r, c);
+                            this.createCellSprite(r, c, cell, pos.x, pos.y);
+                            const data = this.tileSprites[r][c];
+                            if (data) {
+                                const targets = [data.sprite, data.frame, data.label].filter(Boolean);
+                                targets.forEach(t => t.setScale(0));
+                                this.tweens.add({ targets, scale: 1, duration: 220, ease: 'Back.easeOut' });
+                            }
+                        }
+                    }
+                }
+            }
+
+            
+            dropColumnSegmentAnimated(col, rowStart, rowEnd) {
+                const segmentSize = rowEnd - rowStart + 1;
+                if (segmentSize <= 0) return;
+
+                
+                const existingTiles = [];
+                for (let r = rowStart; r <= rowEnd; r++) {
+                    const cell = this.board[r][col];
+                    if (cell && cell.type === ELEMENT_TYPES.TILE) {
+                        existingTiles.push({
+                            cell: { ...cell },
+                            oldRow: r,
+                            spriteData: this.tileSprites[r]?.[col] || null
+                        });
+                    }
+                }
+
+                
+                for (let r = rowStart; r <= rowEnd; r++) {
+                    this.tileSprites[r][col] = null;
+                }
+
+                const missing = segmentSize - existingTiles.length;
+                const finalCells = [];
+                for (let i = 0; i < missing; i++) {
+                    finalCells.push({
+                        isNew: true,
+                        cell: { type: ELEMENT_TYPES.TILE, color: Math.floor(Math.random() * this.COLORS), isFixed: false }
+                    });
+                }
+                for (let e of existingTiles) {
+                    finalCells.push({ isNew: false, cell: e.cell, oldRow: e.oldRow, spriteData: e.spriteData });
+                }
+
+                for (let i = 0; i < segmentSize; i++) {
+                    const newRow = rowStart + i;
+                    const entry = finalCells[i];
+                    this.board[newRow][col] = entry.cell;
+                    const targetPos = this.getTilePosition(newRow, col);
+
+                    if (entry.isNew) {
+                        // Новая фишка появляется над полем и падает вниз
+                        const spawnRow = rowStart - (missing - i);
+                        const spawnPos = this.getTilePosition(spawnRow, col);
+                        const sprite = this.add.sprite(spawnPos.x, spawnPos.y, 'tile_' + entry.cell.color);
+                        sprite.setDepth(0);
+                        this.tileSprites[newRow][col] = { sprite, frame: null, label: null, isFixed: false };
+
+                        const fallDistance = Math.max(1, newRow - spawnRow);
+                        this.tweens.add({
+                            targets: sprite,
+                            y: targetPos.y,
+                            duration: Math.min(700, 260 + fallDistance * 45),
+                            ease: 'Power2.easeIn'
+                        });
+                    } else {
+                        let data = entry.spriteData;
+                        if (!data) {
+                            
+                            const oldPos = this.getTilePosition(entry.oldRow, col);
+                            const sprite = this.add.sprite(oldPos.x, oldPos.y, 'tile_' + entry.cell.color);
+                            sprite.setDepth(0);
+                            data = { sprite, frame: null, label: null, isFixed: entry.cell.isFixed || false };
+                        }
+                        this.tileSprites[newRow][col] = data;
+
+                        if (entry.oldRow !== newRow) {
+                            const targets = [data.sprite, data.frame].filter(Boolean);
+                            const fallDistance = newRow - entry.oldRow;
+                            this.tweens.add({
+                                targets,
+                                y: targetPos.y,
+                                duration: Math.min(700, 260 + fallDistance * 45),
+                                ease: 'Power2.easeIn'
+                            });
+                        }
+                    }
+                }
+            }
+
+            dropTiles() {
+                
+                this.syncMissingSprites();
+
+                let maxFallDistance = 1;
+                for (let c = 0; c < this.COLS; c++) {
+                    let segmentStart = 0;
+                    for (let r = 0; r <= this.ROWS; r++) {
+                        const isObstacle = r === this.ROWS || this.isObstacleCell(r, c);
+                        if (isObstacle) {
+                            if (r > segmentStart) {
+                                maxFallDistance = Math.max(maxFallDistance, r - segmentStart);
+                                this.dropColumnSegmentAnimated(c, segmentStart, r - 1);
+                            }
+                            segmentStart = r + 1;
+                        }
+                    }
+                }
+
+                this.collectColorChangingBoxes();
+
+                const waitTime = Math.min(750, 320 + maxFallDistance * 45);
+                const timer = this.time.delayedCall(waitTime, () => {
+                    this.processingCount = 0;
+                    this.isProcessing = false;
+                    const newMatches = this.findAllMatches();
+                    if (newMatches.size > 0) {
+                        this.isProcessing = true;
+                        this.processMatches();
+                    } else {
+                        this.isProcessing = false;
+                        this.checkGameOver();
+                    }
+                }, [], this);
+                this.timers.push(timer);
+            }
+
+            checkGameOver() {
+                if (this.goalReached || this.isGameOver) return;
+                if (this.moves >= this.MAX_MOVES) {
+                    this.isGameOver = true;
+                    this.showGameOver();
+                    return;
+                }
+                if (!this.hasValidMoves()) {
+                    this.showNoMovesMessage();
+                }
+            }
+
+            showNoMovesMessage() {
+                const gameWidth = this.sys.game.config.width;
+                const gameHeight = this.sys.game.config.height;
+                const text = this.add.text(gameWidth / 2, gameHeight / 2, 'Нет ходов! Перемешиваем...', {
+                    fontSize: '32px',
+                    fill: '#ffd700',
+                    fontStyle: 'bold',
+                    stroke: '#000',
+                    strokeThickness: 4
+                }).setOrigin(0.5).setDepth(1000);
+                this.tweens.add({
+                    targets: text, alpha: 0, duration: 1000, delay: 1500,
+                    onComplete: () => {
+                        text.destroy();
+                        this.shuffleBoard();
+                        this.checkGameOver();
+                    }
+                });
+            }
+
+            // UI
+            
+            updateUI() {
+                if (this.uiText) { this.uiText.destroy(); this.uiText = null; }
+                if (this.goalIcon) { this.goalIcon.destroy(); this.goalIcon = null; }
+                if (this.goalLabel) { this.goalLabel.destroy(); this.goalLabel = null; }
+                if (this.levelLabel) { this.levelLabel.destroy(); this.levelLabel = null; }
+                for (let label of this.extraLabels) {
+                    if (label && label.active) { label.destroy(); }
+                }
+                this.extraLabels = [];
+
+                const gameWidth = this.sys.game.config.width;
+                const current = this.collected[this.goalColor];
+                const remainingMoves = this.MAX_MOVES - this.moves;
+                const fontFamily = "'Baloo 2', 'Trebuchet MS', sans-serif";
+
+                const topMargin = 30; // отступ от верхушки страницы
+                
+                const rowStyle = {
+                    fontFamily,
+                    fontSize: '16px',
+                    color: '#ffffff',
+                    fontStyle: '700',
+                    stroke: '#00000090',
+                    strokeThickness: 3
+                };
+
+                // строка уровня
+                this.levelLabel = this.add.text(gameWidth / 2, topMargin - 20, `Уровень ${this.currentLevel}`, {
+                    fontFamily,
+                    fontSize: '11px',
+                    color: '#ffd76b',
+                    fontStyle: '700',
+                    stroke: '#00000090',
+                    strokeThickness: 2
+                }).setOrigin(0.5).setDepth(100);
+
+                // Основная строка "Собрать  X/Y  |  Количество ходов: Z"
+                
+                const collectLabel = this.add.text(0, topMargin, 'Собрать', rowStyle).setOrigin(0, 0.5).setDepth(100);
+                const iconSize = 22;
+                const goalIcon = this.add.sprite(0, topMargin, 'tile_' + this.goalColor).setDisplaySize(iconSize, iconSize).setDepth(100);
+                const countLabel = this.add.text(0, topMargin, `${current} / ${this.GOAL_COUNT}`, rowStyle).setOrigin(0, 0.5).setDepth(100);
+                const sepLabel = this.add.text(0, topMargin, '    |    ', rowStyle).setOrigin(0, 0.5).setDepth(100);
+                const movesLabel = this.add.text(0, topMargin, `Количество ходов: ${remainingMoves}`, rowStyle).setOrigin(0, 0.5).setDepth(100);
+
+                const gap = 10;
+                const totalWidth = collectLabel.width + gap + iconSize + gap + countLabel.width + sepLabel.width + movesLabel.width;
+                let x = gameWidth / 2 - totalWidth / 2;
+
+                collectLabel.setX(x);
+                x += collectLabel.width + gap;
+                goalIcon.setX(x + iconSize / 2);
+                x += iconSize + gap;
+                countLabel.setX(x);
+                x += countLabel.width;
+                sepLabel.setX(x);
+                x += sepLabel.width;
+                movesLabel.setX(x);
+
+                this.uiText = collectLabel; 
+                this.goalIcon = goalIcon;
+                this.extraLabels.push(countLabel, sepLabel, movesLabel);
+
+                
+
+                const hint = this.add.text(gameWidth - 10, 10, 'R - перезагрузка | N - след. уровень', {
+                    fontFamily,
+                    fontSize: '12px',
+                    color: '#888',
+                    backgroundColor: 'rgba(0,0,0,0.4)',
+                    padding: { x: 8, y: 4 }
+                }).setOrigin(1, 0).setDepth(100);
+                this.extraLabels.push(hint);
+            }
+
+            // модальные окна
+            showModal(title, color, icon, subtitle) {
+                this.modalActive = true;
+                const w = this.sys.game.config.width;
+                const h = this.sys.game.config.height;
+                const modalW = Math.min(500, w - 40);
+                const modalH = 220;
+                const modalX = (w - modalW) / 2;
+                const modalY = (h - modalH) / 2;
+                const bg = this.add.graphics().fillStyle(0x000000, 0.85).fillRoundedRect(modalX, modalY, modalW, modalH, 20)
+                    .setDepth(999);
+
+                const titleText = this.add.text(w / 2, h / 2 - 40, `${icon} ${title}`, {
+                    fontSize: '56px',
+                    fill: color,
+                    fontStyle: 'bold',
+                    stroke: '#000000',
+                    strokeThickness: 6
+                }).setOrigin(0.5).setDepth(1000);
+
+                if (title === 'ПОБЕДА!') {
+                    const goalIconModal = this.add.sprite(w / 2 - 120, h / 2 + 30, 'tile_' + this.goalColor);
+                    goalIconModal.setDisplaySize(50, 50);
+                    goalIconModal.setDepth(1000);
+                    this.add.text(w / 2 - 60, h / 2 + 35, `× ${this.GOAL_COUNT}`, {
+                        fontSize: '28px',
+                        fill: '#ffd700',
+                        fontStyle: 'bold',
+                        stroke: '#000000',
+                        strokeThickness: 4
+                    }).setOrigin(0, 0.5).setDepth(1000);
+                }
+
+                const subtitleText = this.add.text(w / 2, h / 2 + 70, subtitle || 'Нажмите для продолжения', {
+                    fontSize: '20px',
+                    fill: '#ffd700',
+                    fontStyle: 'bold',
+                    stroke: '#000000',
+                    strokeThickness: 4
+                }).setOrigin(0.5).setDepth(1000);
+
+                this.tweens.add({
+                    targets: [titleText, subtitleText, bg],
+                    scale: { from: 0.5, to: 1 },
+                    alpha: { from: 0, to: 1 },
+                    duration: 500,
+                    ease: 'Back.easeOut'
+                });
+
+                this.input.once('pointerdown', () => {
+                    if (!this.scene.isActive()) return;
+                    this.modalActive = false;
+                    this.clearTimers();
+                    if (title === 'ПОБЕДА!') {
+                        this.goToNextLevel();
+                    } else if (title === 'ПОРАЖЕНИЕ!') {
+                        this.restartLevel();
+                    } else {
+                        this.scene.restart();
+                    }
+                });
+            }
+
+            showVictory() {
+                this.showModal('ПОБЕДА!', '#ffffff', '🎉', `Уровень ${this.currentLevel} пройден!`);
+            }
+
+            showGameOver() {
+                this.showModal('ПОРАЖЕНИЕ!', '#ff4444', '😢', `Ходы закончились! Попробуйте снова`);
+            }
+
+            showAllLevelsComplete() {
+                this.modalActive = true;
+                const w = this.sys.game.config.width;
+                const h = this.sys.game.config.height;
+                const modalW = Math.min(500, w - 40);
+                const modalH = 220;
+                const modalX = (w - modalW) / 2;
+                const modalY = (h - modalH) / 2;
+                const bg = this.add.graphics().fillStyle(0x000000, 0.85).fillRoundedRect(modalX, modalY, modalW, modalH, 20)
+                    .setDepth(999);
+
+                this.add.text(w / 2, h / 2 - 20, '🎉 ВСЕ УРОВНИ ПРОЙДЕНЫ! 🎉', {
+                    fontSize: '40px',
+                    fill: '#ffd700',
+                    fontStyle: 'bold',
+                    stroke: '#000000',
+                    strokeThickness: 6
+                }).setOrigin(0.5).setDepth(1000);
+
+                this.add.text(w / 2, h / 2 + 50, 'Нажмите для перезапуска с 1 уровня', {
+                    fontSize: '20px',
+                    fill: '#ffffff',
+                    fontStyle: 'bold',
+                    stroke: '#000000',
+                    strokeThickness: 4
+                }).setOrigin(0.5).setDepth(1000);
+
+                this.input.once('pointerdown', () => {
+                    if (!this.scene.isActive()) return;
+                    this.modalActive = false;
+                    this.clearTimers();
+                    this.currentLevel = 0;
+                    this.goToNextLevel();
+                });
+            }
+
+            
+            drawBoard() {
+                for (let r = 0; r < this.ROWS; r++) {
+                    for (let c = 0; c < this.COLS; c++) {
+                        const data = this.tileSprites[r]?.[c];
+                        if (data) {
+                            if (data.sprite && data.sprite.active) { data.sprite.destroy(); }
+                            if (data.frame && data.frame.active) { data.frame.destroy(); }
+                            if (data.label && data.label.active) { data.label.destroy(); }
+                            this.tileSprites[r][c] = null;
+                        }
+                    }
+                }
+
+                for (let label of this.extraLabels) {
+                    if (label && label.active) { label.destroy(); }
+                }
+                this.extraLabels = [];
+
+                this.tileSprites = [];
+                for (let r = 0; r < this.ROWS; r++) {
+                    this.tileSprites[r] = [];
+                    for (let c = 0; c < this.COLS; c++) {
+                        const cell = this.board[r][c];
+                        if (cell && cell.type !== ELEMENT_TYPES.EMPTY && !cell.isPartOfBox) {
+                            const pos = this.getTilePosition(r, c);
+                            this.createCellSprite(r, c, cell, pos.x, pos.y);
+                        } else {
+                            this.tileSprites[r][c] = null;
+                        }
+                    }
+                }
+            }
+        }
+
+        // запуск
+        async function startGame() {
+            CURRENT_LEVEL = 1;
+            LEVEL_CONFIG = await loadLevelConfig(CURRENT_LEVEL);
+
+            const maxWidth = window.innerWidth - 20;
+            const maxHeight = window.innerHeight - 20;
+            const config = {
+                type: Phaser.AUTO,
+                width: Math.min(maxWidth, 1200),
+                height: Math.min(maxHeight, 900),
+                scene: Match3Scene,
+                parent: 'game-container',
+                transparent: true, 
+                scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH }
+            };
+            const game = new Phaser.Game(config);
+        }
+
+        startGame();
+    </script>
+</body>
+</html>

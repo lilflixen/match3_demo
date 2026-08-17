@@ -1,0 +1,33 @@
+{
+  "rows": 7,
+  "cols": 7,
+  "colors": 4,
+  "goal": {
+    "color": 1,
+    "count": 9
+  },
+  "maxMoves": 20,
+  "level": 2,
+  "fixedTiles": [
+    {
+      "row": 0,
+      "col": 3,
+      "color": 0
+    },
+    {
+      "row": 6,
+      "col": 3,
+      "color": 2
+    }
+  ],
+  "boxes": [
+    {
+      "row": 3,
+      "col": 3,
+      "boxType": "destructible",
+      "color": 0,
+      "hp": 1,
+      "size": 1
+    }
+  ]
+}

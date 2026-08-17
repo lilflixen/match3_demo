@@ -1,0 +1,90 @@
+{
+  "rows": 12,
+  "cols": 12,
+  "colors": 6,
+  "goal": {
+    "color": 5,
+    "count": 20
+  },
+  "maxMoves": 28,
+  "level": 10,
+  "fixedTiles": [
+    {
+      "row": 0,
+      "col": 0,
+      "color": 3
+    },
+    {
+      "row": 0,
+      "col": 11,
+      "color": 1
+    },
+    {
+      "row": 11,
+      "col": 0,
+      "color": 4
+    },
+    {
+      "row": 11,
+      "col": 11,
+      "color": 2
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "color": 5
+    },
+    {
+      "row": 6,
+      "col": 6,
+      "color": 0
+    }
+  ],
+  "boxes": [
+    {
+      "row": 2,
+      "col": 2,
+      "boxType": "destructible",
+      "color": 0,
+      "hp": 2,
+      "size": 1
+    },
+    {
+      "row": 2,
+      "col": 9,
+      "boxType": "colored",
+      "color": 5,
+      "hp": 2,
+      "size": 2
+    },
+    {
+      "row": 9,
+      "col": 2,
+      "boxType": "color_changing",
+      "color": 0,
+      "hp": 1,
+      "size": 1
+    },
+    {
+      "row": 9,
+      "col": 9,
+      "boxType": "blocker",
+      "hp": 1,
+      "size": 1
+    },
+    {
+      "row": 5,
+      "col": 8,
+      "boxType": "destructible",
+      "color": 0,
+      "hp": 1,
+      "size": 1,
+      "contains": {
+        "type": "box",
+        "boxType": "colored",
+        "color": 5,
+        "hp": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,255 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|c:\\users\\lil_flixen\\desktop\\web\\match3\\wwwroot\\index.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|solutionrelative:wwwroot\\index.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|c:\\users\\lil_flixen\\desktop\\web\\match3\\wwwroot\\levels\\level_5.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|solutionrelative:wwwroot\\levels\\level_5.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|c:\\users\\lil_flixen\\desktop\\web\\match3\\wwwroot\\levels\\level_4.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|solutionrelative:wwwroot\\levels\\level_4.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|c:\\users\\lil_flixen\\desktop\\web\\match3\\wwwroot\\levels\\level_3.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|solutionrelative:wwwroot\\levels\\level_3.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|c:\\users\\lil_flixen\\desktop\\web\\match3\\wwwroot\\levels\\level_2.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|solutionrelative:wwwroot\\levels\\level_2.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|c:\\users\\lil_flixen\\desktop\\web\\match3\\wwwroot\\levels\\level_1.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|solutionrelative:wwwroot\\levels\\level_1.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|c:\\users\\lil_flixen\\desktop\\web\\match3\\wwwroot\\levels\\level_10.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|solutionrelative:wwwroot\\levels\\level_10.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|c:\\users\\lil_flixen\\desktop\\web\\match3\\wwwroot\\levels\\level_9.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|solutionrelative:wwwroot\\levels\\level_9.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|c:\\users\\lil_flixen\\desktop\\web\\match3\\wwwroot\\levels\\level_8.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|solutionrelative:wwwroot\\levels\\level_8.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|c:\\users\\lil_flixen\\desktop\\web\\match3\\wwwroot\\levels\\level_7.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|solutionrelative:wwwroot\\levels\\level_7.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|c:\\users\\lil_flixen\\desktop\\web\\match3\\wwwroot\\levels\\level_6.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|solutionrelative:wwwroot\\levels\\level_6.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|c:\\users\\lil_flixen\\desktop\\web\\match3\\wwwroot\\config.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|solutionrelative:wwwroot\\config.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|c:\\users\\lil_flixen\\desktop\\web\\match3\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|c:\\users\\lil_flixen\\desktop\\web\\match3\\match3.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{568B3D12-BF88-41CF-81B3-C97802383161}|Match3.csproj|solutionrelative:match3.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 11,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "level_9.json",
+              "DocumentMoniker": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_9.json",
+              "RelativeDocumentMoniker": "wwwroot\\levels\\level_9.json",
+              "ToolTip": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_9.json",
+              "RelativeToolTip": "wwwroot\\levels\\level_9.json",
+              "ViewState": "AgIAAC4AAAAAAAAAAAAowEYAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-08-16T10:34:06.94Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "level_8.json",
+              "DocumentMoniker": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_8.json",
+              "RelativeDocumentMoniker": "wwwroot\\levels\\level_8.json",
+              "ToolTip": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_8.json",
+              "RelativeToolTip": "wwwroot\\levels\\level_8.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-08-16T10:33:54.81Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "level_7.json",
+              "DocumentMoniker": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_7.json",
+              "RelativeDocumentMoniker": "wwwroot\\levels\\level_7.json",
+              "ToolTip": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_7.json",
+              "RelativeToolTip": "wwwroot\\levels\\level_7.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-08-16T10:33:43.12Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "level_6.json",
+              "DocumentMoniker": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_6.json",
+              "RelativeDocumentMoniker": "wwwroot\\levels\\level_6.json",
+              "ToolTip": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_6.json",
+              "RelativeToolTip": "wwwroot\\levels\\level_6.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-08-16T10:33:33.321Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "level_5.json",
+              "DocumentMoniker": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_5.json",
+              "RelativeDocumentMoniker": "wwwroot\\levels\\level_5.json",
+              "ToolTip": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_5.json",
+              "RelativeToolTip": "wwwroot\\levels\\level_5.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABoAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-08-16T10:33:24.169Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "level_4.json",
+              "DocumentMoniker": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_4.json",
+              "RelativeDocumentMoniker": "wwwroot\\levels\\level_4.json",
+              "ToolTip": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_4.json",
+              "RelativeToolTip": "wwwroot\\levels\\level_4.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-08-16T10:33:13.777Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "level_1.json",
+              "DocumentMoniker": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_1.json",
+              "RelativeDocumentMoniker": "wwwroot\\levels\\level_1.json",
+              "ToolTip": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_1.json",
+              "RelativeToolTip": "wwwroot\\levels\\level_1.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-08-16T10:32:38.899Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "level_2.json",
+              "DocumentMoniker": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_2.json",
+              "RelativeDocumentMoniker": "wwwroot\\levels\\level_2.json",
+              "ToolTip": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_2.json",
+              "RelativeToolTip": "wwwroot\\levels\\level_2.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-08-16T10:32:51.656Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "level_10.json",
+              "DocumentMoniker": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_10.json",
+              "RelativeDocumentMoniker": "wwwroot\\levels\\level_10.json",
+              "ToolTip": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_10.json",
+              "RelativeToolTip": "wwwroot\\levels\\level_10.json",
+              "ViewState": "AgIAADcAAAAAAAAAAAAowE0AAAAgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-08-16T10:34:16.992Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "level_3.json",
+              "DocumentMoniker": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_3.json",
+              "RelativeDocumentMoniker": "wwwroot\\levels\\level_3.json",
+              "ToolTip": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\levels\\level_3.json",
+              "RelativeToolTip": "wwwroot\\levels\\level_3.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-08-16T10:33:02.24Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "config.json",
+              "DocumentMoniker": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\config.json",
+              "RelativeDocumentMoniker": "wwwroot\\config.json",
+              "ToolTip": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\config.json",
+              "RelativeToolTip": "wwwroot\\config.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-08-15T20:37:30.857Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "index.html",
+              "DocumentMoniker": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\index.html",
+              "RelativeDocumentMoniker": "wwwroot\\index.html",
+              "ToolTip": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\wwwroot\\index.html",
+              "RelativeToolTip": "wwwroot\\index.html",
+              "ViewState": "AgIAAJ8EAAAAAAAAAAAAAL0EAAA/AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-08-13T11:46:56.235Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "Match3.csproj",
+              "DocumentMoniker": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\Match3.csproj",
+              "RelativeDocumentMoniker": "Match3.csproj",
+              "ToolTip": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\Match3.csproj",
+              "RelativeToolTip": "Match3.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-08-13T11:45:36.793Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "C:\\Users\\lil_flixen\\Desktop\\WEB\\Match3\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-13T11:38:59.363Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

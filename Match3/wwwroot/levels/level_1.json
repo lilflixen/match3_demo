@@ -1,0 +1,24 @@
+{
+  "rows": 6,
+  "cols": 6,
+  "colors": 4,
+  "goal": {
+    "color": 0,
+    "count": 8
+  },
+  "maxMoves": 20,
+  "level": 1,
+  "fixedTiles": [
+    {
+      "row": 0,
+      "col": 0,
+      "color": 2
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "color": 3
+    }
+  ],
+  "boxes": []
+}
